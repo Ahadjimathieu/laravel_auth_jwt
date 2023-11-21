@@ -22,7 +22,7 @@ Route::group(['prefix' => 'v1'], function(){
         Route::post('/register','register');
         Route::get('/user','me');
         Route::post('/logout', 'logout');
-        Route::get('/refresh', 'refresh');
+        Route::post('/refresh', 'refresh');
 
     });
 

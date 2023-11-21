@@ -25,26 +25,20 @@ class AuthController extends Controller
         return response()->json(['error' => 'Unauthorized'], 401);
     }
 
-    public function me()
-    {
-        return response()->json($this->guard()->user());
-    }
-    public function register(Request $request)
-    {
-
-
-
-    }
     public function logout()
     {
-        Auth::logout();
-
-        return response()->json(['message' => 'Successfully logged out']);
+        $cookie = Cookie::forget('token');
+        request()->user()->tokens()->delete();
+        return response([
+            'message' => 'Vous vous êtes déconnecté avec succès.'
+        ])->withCookie($cookie);
     }
 
     public function refresh()
     {
-        return $this->respondWithToken($this->guard()->refresh());
+        $newToken = auth()->refresh();
+        $cookie = Cookie('token', $newToken, 60 * 1);
+        return $this->respondWithToken($newToken)->withCookie($cookie);
     }
 
     /**
@@ -56,12 +50,13 @@ class AuthController extends Controller
      */
     protected function respondWithToken($token)
     {
-        $user = $this->me();
-            return response()->json([
-                'access_token' => $token,
-                'token_type' => 'bearer',
-                'expires_in' => JWTAuth::factory()->getTTL() * 3600, // Utilisez JWTAuth pour obtenir le TTL du jeton
-            ]);
+        $cookie = Cookie('token', $token, 60 * 1);
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' =>  auth('api')->factory()->getTTL() * 60,
+        ])->withCookie($cookie);
 
     }
 
